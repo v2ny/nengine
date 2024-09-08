@@ -1,6 +1,6 @@
-# Xenith Engine
+# Nengine
 
-**Xenith Engine** is a modern 3D game engine built in Rust, focusing on performance, flexibility, and future scalability. This engine is designed to support advanced rendering, physics, and game mechanics, with a clean, efficient codebase aimed at both beginners and experienced developers.
+**Nengine** is a modern 3D game engine built in Rust, focusing on performance, flexibility, and future scalability. This engine is designed to support advanced rendering, physics, and game mechanics, with a clean, efficient codebase aimed at both beginners and experienced developers.
 
 ## Key Features
 
@@ -40,8 +40,8 @@ This project is in its early stages, and contributions are welcome! Please submi
 
 ## License
 
-Xenith Engine is licensed under the **AGPL-3.0**. For more details, please look at the [LICENSE](LICENSE) file.
+Nengine is licensed under the **AGPL-3.0**. For more details, please look at the [LICENSE](LICENSE) file.
 
 ---
 
-Xenith Engine is currently in development stage, without any completed features or examples, and not recommended at all for uses other than educational purposes.
+Nengine is currently in development stage, without any completed features or examples, and not recommended at all for uses other than educational purposes.
