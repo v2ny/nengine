@@ -1,0 +1,16 @@
+[package]
+name = "nengine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gl = { version = "0.14.0" }
+egui_glfw = { version = "0.55.2" }
+
+mlua = { version = "0.9.9", features = ["lua54"] }
+
+nalgebra = { version = "0.33.0" }
+physsol = { version = "0.2.0" }
+
+serde = { version = "1.0.210" }
+smol = { version = "2.0.2" }

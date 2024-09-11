@@ -5,7 +5,7 @@
 ## Key Features
 
 - **Rendering API**: Initial focus on **OpenGL** with plans to integrate **Vulkan** in the future.
-- **Physics Engine**: Powered by **Rapier** for fast and accurate 2D/3D physics.
+- **Physics Engine**: Powered by **Physsol** for fast and accurate 2D/3D physics.
 - **Math Library**: Uses **nalgebra** for advanced linear algebra and 3D math operations.
 - **Entity Component System (ECS)**: Built on **hecs** for efficient entity and data management.
 - **Model Loader**: Custom Implemented to support OBJ, FBX, USDZ, GLB, GLTF, DAE and STL.
@@ -15,16 +15,16 @@
 ## Roadmap & Feature Checklist
 
 - [ ] OpenGL rendering pipeline
+- [ ] Basic GUI (egui)
+- [ ] Scripting integration (e.g., Lua, Typescript (Maybe, C++))
 - [ ] Basic OBJ/GLTF model loading (From textures and materials to lighting, Advanced lighting.)
 - [ ] Entity Component System integration (using HECS crate)
-- [ ] Physics engine integration (Rapier)
-- [ ] Basic GUI (egui)
+- [ ] Physics engine integration (Physsol)
 - [ ] Vulkan rendering support
 - [ ] Scene management system
 - [ ] Skeletal animation system
 - [ ] Particle system
 - [ ] Sound engine
-- [ ] Scripting integration (e.g., Lua, Typescript (Maybe, C++))
 - [ ] Networking support
 - [ ] Post Processing & VFX
 
