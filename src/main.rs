@@ -1,9 +1,16 @@
-use core::engine::platform::window::{self, Window};
+use core::engine::platform::implementations::{self, WindowProperties, WindowOptions, Size};
 
 pub mod core;
 
 fn main() {
-    let platform = window::Window::new(Window {
-        size: todo!(),
-    });
+    let mut platform = implementations::Window::new(WindowProperties {
+		window_options: WindowOptions {
+			title: String::from("nengine"),
+			size: Size::from(1024, 600),
+			// ..Default::default()
+		},
+		display_options: None
+	});
+
+	platform.initialize_opengl();
 }

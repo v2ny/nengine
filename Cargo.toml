@@ -7,7 +7,7 @@ edition = "2021"
 gl = { version = "0.14.0" }
 egui_glfw = { version = "0.55.2" }
 
-mlua = { version = "0.9.9", features = ["lua54"] }
+mlua = { version = "0.9.9", features = ["lua54", "vendored"] }
 
 nalgebra = { version = "0.33.0" }
 physsol = { version = "0.2.0" }
