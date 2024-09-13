@@ -2,7 +2,7 @@ use egui_glfw::glfw;
 use super::implementations::{Window, WindowProperties};
 
 impl Window {
-	pub fn new(properties: WindowProperties) -> Self {
+	pub fn new(properties: WindowProperties, scripts: Vec<String>) -> Self {
 		let mut glfw = glfw::init(Self::error_callback)
 			.expect("Failed to initialize glfw, See platform/window.rs");
 
@@ -50,7 +50,8 @@ impl Window {
 		Window {
 			glfw,
 			window,
-			events
+			events,
+			scripts
 		}
 	}
 
@@ -61,10 +62,10 @@ impl Window {
 	pub fn initialize_opengl(&mut self) {
 		self.glfw.make_context_current(Some(&self.window));
 		gl::load_with(|s| self.glfw.get_proc_address_raw(s));
+	}
 
-		unsafe {
-			self.game_loop();
-		}
+	pub fn run(&mut self) {
+		unsafe { self.game_loop() }
 	}
 
 	fn error_callback(err: glfw::Error, description: String) {

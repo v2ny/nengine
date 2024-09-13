@@ -41,5 +41,6 @@ pub struct WindowProperties {
 pub struct Window {
 	pub glfw: glfw::Glfw,
 	pub window: glfw::PWindow,
-	pub events: GlfwReceiver<(f64, WindowEvent)>
+	pub events: GlfwReceiver<(f64, WindowEvent)>,
+	pub scripts: Vec<String>
 }

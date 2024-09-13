@@ -1,4 +1,4 @@
-use core::engine::platform::implementations::{self, WindowProperties, WindowOptions, Size};
+use core::engine::platform::implementations::{self, Size, WindowOptions, WindowProperties};
 
 pub mod core;
 
@@ -10,7 +10,8 @@ fn main() {
 			// ..Default::default()
 		},
 		display_options: None
-	});
-
+	}, vec!["examples/script/test.lua".to_string()]);
+	
 	platform.initialize_opengl();
+	platform.run();
 }
