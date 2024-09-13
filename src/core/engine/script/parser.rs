@@ -43,7 +43,9 @@ impl LuaParser {
 
             // Load and execute the new script
             let lua = self.lua.get_mut();
-            lua.load(&file_content).exec().expect("Failed to execute a Lua script");
+            lua.load(&file_content).exec().unwrap_or_else(|err| {
+				eprintln!("=> Failed to execute '{}':\nOutput: {}", file.clone(), err);
+			});
 
             // Update the hash map with the new content
             self.loaded.insert(file.to_string(), file_content.trim().to_string());
