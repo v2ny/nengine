@@ -15,8 +15,8 @@
 ## Roadmap & Feature Checklist
 
 - [ ] OpenGL rendering pipeline
-- [ ] Basic GUI (egui)
-- [ ] Scripting integration (e.g., Lua, Typescript (Maybe, C++))
+- [ ] Basic GUI (egui) (HIGHEST-PRIORITY)
+- [x] Scripting integration (e.g., Lua, Typescript (Maybe, C++))
 - [ ] Basic OBJ/GLTF model loading (From textures and materials to lighting, Advanced lighting.)
 - [ ] Entity Component System integration (using HECS crate)
 - [ ] Physics engine integration (Physsol)
@@ -24,7 +24,7 @@
 - [ ] Scene management system
 - [ ] Skeletal animation system
 - [ ] Particle system
-- [ ] Sound engine
+- [x] Sound engine (WORKING ON IT STILL)
 - [ ] Networking support
 - [ ] Post Processing & VFX
 
