@@ -1,5 +1,7 @@
 use egui_glfw::glfw;
-use super::implementations::{Window, WindowProperties};
+use crate::core::engine::shaders::manager::{Shader, ShaderSources};
+
+use super::implementations::{Window, WindowProperties, WindowShaders};
 
 impl Window {
 	pub fn new(properties: WindowProperties, scripts: Vec<String>) -> Self {
@@ -10,7 +12,6 @@ impl Window {
 		glfw.window_hint(glfw::WindowHint::OpenGlProfile(glfw::OpenGlProfileHint::Core));
 		glfw.window_hint(glfw::WindowHint::DoubleBuffer(true));
 
-		
 		let (mut window, events) = glfw.clone()
 		.with_primary_monitor(|_, mut m| {
 			glfw.create_window(if let Some(screen) = properties.display_options { 
@@ -42,16 +43,24 @@ impl Window {
 					}
 				))
 		}).expect("Failed to create GLFW window.");
-			
+
 		window.set_key_polling(true);
 		window.set_mouse_button_polling(true);
 		window.set_cursor_pos_polling(true);
+
+		let default_shader = Shader::new(ShaderSources {
+			vertex: String::from("resources/shaders/vertex.glsl"),
+			fragment: String::from("resources/shaders/fragment.glsl"),
+		});
 
 		Window {
 			glfw,
 			window,
 			events,
-			scripts
+			scripts,
+			shaders: WindowShaders {
+				default: default_shader
+			}
 		}
 	}
 
@@ -62,6 +71,8 @@ impl Window {
 	pub fn initialize_opengl(&mut self) {
 		self.glfw.make_context_current(Some(&self.window));
 		gl::load_with(|s| self.glfw.get_proc_address_raw(s));
+
+		self.shaders.default.setup();
 	}
 
 	pub fn run(&mut self) {

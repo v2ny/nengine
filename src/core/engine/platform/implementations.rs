@@ -1,5 +1,7 @@
 use egui_glfw::glfw::{self, GlfwReceiver, WindowEvent};
 
+use crate::core::engine::shaders::manager::Shader;
+
 #[derive(Clone)]
 pub struct Size {
 	pub width: u32,
@@ -38,9 +40,15 @@ pub struct WindowProperties {
 	pub display_options: Option<DisplayOptions>
 }
 
+pub struct WindowShaders {
+	pub default: Shader
+}
+
 pub struct Window {
 	pub glfw: glfw::Glfw,
 	pub window: glfw::PWindow,
 	pub events: GlfwReceiver<(f64, WindowEvent)>,
-	pub scripts: Vec<String>
+
+	pub scripts: Vec<String>,
+	pub shaders: WindowShaders
 }
