@@ -1,4 +1,6 @@
-use super::parser::LuaParser;
+use rquickjs::prelude::Func;
+
+use super::parser::{JSParser, LuaParser};
 
 impl LuaParser {
 	fn export_functions(&mut self) {
@@ -10,6 +12,29 @@ impl LuaParser {
 	}
 
 	pub fn set_globals(&mut self) {
+		self.export_functions();
+		// todo
+	}
+}
+
+impl JSParser {
+	fn export_functions(&mut self) {
+        let context = self.context.borrow();
+        context.with(|ctx| {
+            // Example: Exporting a Rust function to JavaScript as "clear_window_color"
+            ctx.globals().set(
+                "clear_window_color",
+                Func::new(|red: f32, green: f32, blue: f32, alpha: f32| {
+                    clear_gl_window_color(red, green, blue, alpha);
+                })
+            ).unwrap();
+        });
+    }
+
+	pub fn set_globals(&mut self) {
+		self.context.borrow().with(|ctx| {
+			ctx.globals().set("myGlobal", 42).unwrap();
+		});
 		self.export_functions();
 		// todo
 	}

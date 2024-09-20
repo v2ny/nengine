@@ -13,10 +13,16 @@ impl Window {
 	/// be called at any time, If you called `initialize_opengl()` function then you don't need
 	/// to call this function as the initialize function calls it after initializing opengl.
 	pub unsafe fn game_loop(&mut self) {
-		let mut parser = engine::script::parser::LuaParser::setup();
-		parser.init_globals();
+		let mut lua_parser = engine::script::parser::LuaParser::setup();
+		let mut js_parser = engine::script::parser::JSParser::setup();
+		lua_parser.init_globals();
+		js_parser.init_globals();
 		for script in self.scripts.iter_mut() {
-			parser.add(script.to_string());
+			if script.ends_with(".lua") {
+				lua_parser.add(script.to_string());
+			} else {
+				js_parser.add(script.to_string());
+			}
 		}
 
 		let vao = self.draw_triangle();
@@ -27,7 +33,8 @@ impl Window {
 			self.handle_events();
 			
 			// * Clear window color
-			parser.load();
+			lua_parser.load();
+			js_parser.load();
 			gl::Clear(gl::COLOR_BUFFER_BIT);
 			
 			self.shaders.default.use_program();

@@ -10,7 +10,7 @@ fn main() {
 			// ..Default::default()
 		},
 		display_options: None
-	}, vec!["examples/script/test.lua".to_string()]);
+	}, vec!["examples/script/test.lua".to_string(), "examples/script/test.js".to_string()]);
 	
 	platform.initialize_opengl();
 	platform.run();
