@@ -1,7 +1,7 @@
 use egui_glfw::glfw;
 use crate::core::engine::shaders::manager::{Shader, ShaderSources};
 
-use super::implementations::{Window, WindowProperties, WindowShaders};
+use super::implementations::{UIHolder, Window, WindowProperties, WindowShaders};
 
 impl Window {
 	pub fn new(properties: WindowProperties, scripts: Vec<String>) -> Self {
@@ -16,7 +16,7 @@ impl Window {
 		.with_primary_monitor(|_, mut m| {
 			glfw.create_window(if let Some(screen) = properties.display_options { 
 				if screen.fit_screen {
-					m.as_mut().expect("Failed to get monitor").get_workarea().2 as u32
+					m.as_mut().expect("Failed to get monitor").get_physical_size().0 as u32
 				} else {
 					properties.window_options.size.width
 				}
@@ -24,7 +24,7 @@ impl Window {
 				properties.window_options.size.width
 			}, if let Some(screen) = properties.display_options { 
 				if screen.fit_screen {
-					m.as_mut().expect("Failed to get monitor").get_workarea().3 as u32
+					m.as_mut().expect("Failed to get monitor").get_physical_size().1 as u32
 				} else {
 					properties.window_options.size.height
 				}
@@ -44,6 +44,7 @@ impl Window {
 				))
 		}).expect("Failed to create GLFW window.");
 
+		window.set_framebuffer_size_polling(true);
 		window.set_key_polling(true);
 		window.set_mouse_button_polling(true);
 		window.set_cursor_pos_polling(true);
@@ -57,6 +58,8 @@ impl Window {
 			glfw,
 			window,
 			events,
+
+			ui: UIHolder::default(),
 			scripts,
 			shaders: WindowShaders {
 				default: default_shader
@@ -72,6 +75,7 @@ impl Window {
 		self.glfw.make_context_current(Some(&self.window));
 		gl::load_with(|s| self.glfw.get_proc_address_raw(s));
 
+		self.ui.setup(&mut self.window);
 		self.shaders.default.setup();
 	}
 

@@ -1,6 +1,6 @@
 use std::ffi::c_void;
 
-use egui_glfw::glfw::{self, Context};
+use egui_glfw::{self as egui_backend, glfw::{self, Context}};
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
 
 use crate::core::engine;
@@ -26,11 +26,17 @@ impl Window {
 		}
 
 		let vao = self.draw_triangle();
-
 		while !self.should_close() {
+			let (width, height) = self.window.get_framebuffer_size();
+			gl::Viewport(0, 0, width, height); // Update viewport
+	
+			self.ui.set_np(&mut self.window);
+			self.ui.estate = Some(self.egui_input_state(width as f32, height as f32));
 			// * Handle glfw events
 			self.glfw.poll_events();
 			self.handle_events();
+
+			self.ui.context.as_mut().expect("[S:UC] No context available.").begin_frame(self.ui.estate.as_mut().unwrap().input.take());
 			
 			// * Clear window color
 			lua_parser.load();
@@ -40,6 +46,9 @@ impl Window {
 			self.shaders.default.use_program();
 			gl::BindVertexArray(vao);
 			gl::DrawArrays(gl::TRIANGLES, 0, 3);
+
+			self.ui.draw();
+			self.handle_egui();
 
 			// * Swap window's buffers :)
 			self.window.swap_buffers();
@@ -93,7 +102,9 @@ impl Window {
 				// glfw::WindowEvent::CursorPos(x, y) => {
 				// 	println!("X: {:.2}, Y: {:.2}", x, y);
 				// }
-				_ => {}
+				_ => {
+					egui_backend::handle_event(event, self.ui.estate.as_mut().unwrap());
+				}
 			}
 		}
 	}
