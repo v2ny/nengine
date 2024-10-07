@@ -8,7 +8,7 @@ gl = { version = "0.14.0" }
 egui_glfw = { version = "0.55.2" }
 
 mlua = { version = "0.9.9", features = ["lua54", "vendored"] }
-rquickjs = { version = "0.6.2" }
+rquickjs = { version = "0.6.2", features = ["default", "loader", "dyn-load", "futures", "parallel"] }
 
 nalgebra = { version = "0.33.0" }
 physsol = { version = "0.2.0" }
@@ -24,3 +24,4 @@ rayon = { version = "1.10.0" }
 
 tobj = { version = "4.0.2" }
 goth-gltf = { version = "0.1.1" }
+anyhow = "1.0.89"

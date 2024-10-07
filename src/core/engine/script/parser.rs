@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs};
 
 use mlua::prelude::*;
-use rquickjs::{Runtime, Context};
+use rquickjs::{CatchResultExt, CaughtError, Context, Runtime};
 
 pub struct LuaParser {
     pub lua: std::cell::RefCell<Lua>,
@@ -99,7 +99,7 @@ impl JSParser {
             // Load and execute the new script in the JS context
             let context = self.context.borrow();
             context.with(|ctx| {
-                if let Err(err) = ctx.eval::<String, String>(file_content.clone()) {
+                if let Err(CaughtError::Error(err)) = ctx.eval::<(), _>(file_content.clone()).catch(&ctx) {
                     eprintln!("=> Failed to execute '{}':\nOutput: {}", file, err);
                 }
             });

@@ -7,6 +7,23 @@ use crate::core::engine;
 use super::implementations::Window;
 
 impl Window {
+	pub fn initialize_app(
+		&mut self, 
+		lua_parser: &mut engine::script::parser::LuaParser,
+		js_parser: &mut engine::script::parser::JSParser
+	) {
+		lua_parser.init_globals();
+		js_parser.init_globals();
+
+		for script in self.scripts.iter_mut() {
+			if script.ends_with(".lua") {
+				lua_parser.add(script.to_string());
+			} else {
+				js_parser.add(script.to_string());
+			}
+		}
+	}
+
 	/// # Safety
 	///
 	/// This function should not be called before calling the `initialize_opengl()` and shouldn't
@@ -15,15 +32,8 @@ impl Window {
 	pub unsafe fn game_loop(&mut self) {
 		let mut lua_parser = engine::script::parser::LuaParser::setup();
 		let mut js_parser = engine::script::parser::JSParser::setup();
-		lua_parser.init_globals();
-		js_parser.init_globals();
-		for script in self.scripts.iter_mut() {
-			if script.ends_with(".lua") {
-				lua_parser.add(script.to_string());
-			} else {
-				js_parser.add(script.to_string());
-			}
-		}
+
+		self.initialize_app(&mut lua_parser, &mut js_parser);
 
 		let vao = self.draw_triangle();
 		while !self.should_close() {
