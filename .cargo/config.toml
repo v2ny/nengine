@@ -1,5 +1,10 @@
-[build]
-target = "x86_64-pc-windows-gnu"
+# ! NOTE: 
+# -> If you are/n't using windows to build/run this project
+# -> un/comment the 6th and 7th lines
+# -> or it won't build at all!
+
+# [build]
+# target = "x86_64-pc-windows-gnu"
 
 [target.x86_64-pc-windows-gnu]
 linker = "gcc"
