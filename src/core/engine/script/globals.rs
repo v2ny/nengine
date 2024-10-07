@@ -1,6 +1,4 @@
-use std::{borrow::Borrow, sync::{mpsc, Arc, Mutex}, thread, time::Duration};
-
-use mlua::Function;
+use std::{thread, time::Duration};
 use rquickjs::{prelude::{Func, Rest}, Context, Object, Runtime, Value};
 use super::parser::{JSParser, LuaParser};
 
@@ -9,33 +7,13 @@ impl LuaParser {
 		let lua = self.lua.get_mut();
 
 		lua.globals().set("clear_window_color", lua.create_function(|_, (red, green, blue, alpha)| {
-            clear_gl_window_color(red, green, blue, alpha);
-            Ok(())
-        }).unwrap()).unwrap();
+		  clear_gl_window_color(red, green, blue, alpha);
+		  Ok(())
+	   }).unwrap()).unwrap();
 
-		lua.globals().set("setTimeout", lua.create_function(|_, (callback, delay_ms): (Function, u64)| {
-			let (tx, rx) = mpsc::channel();
-
-            // Spawn a new thread for the timeout
-            thread::spawn(move || {
-                thread::sleep(Duration::from_millis(delay_ms));
-                tx.send(()).unwrap(); // Notify the main thread
-            });
-
-            // This will run the callback once the message is received
-            lua.create_thread(move || {
-                loop {
-                    if let Ok(_) = rx.try_recv() {
-                        callback.call::<_, ()>(()).unwrap();
-                        break;
-                    }
-                }
-
-				callback
-            }()).unwrap();
-
-			Ok(())
-		}).unwrap()).unwrap();		
+		// lua.globals().set("setTimeout", lua.create_function(|_, (callback, delay_ms): (Function, u64)| {
+		// 	Ok(())
+		// }).unwrap()).unwrap();		
 	}
 
 	pub fn set_globals(&mut self) {
@@ -46,16 +24,16 @@ impl LuaParser {
 
 impl JSParser {
 	fn export_functions(&mut self) {
-        let context = self.context.borrow();
-        context.with(|ctx| {
-            // Example: Exporting a Rust function to JavaScript as "clear_window_color"
+	   let context = self.context.borrow();
+	   context.with(|ctx| {
+		  // Example: Exporting a Rust function to JavaScript as "clear_window_color"
 			let globals = ctx.globals();
-            globals.set(
-                "clear_window_color",
-                Func::new(|red: f32, green: f32, blue: f32, alpha: f32| {
-                    clear_gl_window_color(red, green, blue, alpha);
-                })
-            ).unwrap();
+		  globals.set(
+			 "clear_window_color",
+			 Func::new(|red: f32, green: f32, blue: f32, alpha: f32| {
+				clear_gl_window_color(red, green, blue, alpha);
+			 })
+		  ).unwrap();
 			
 
 			// Create a `console` object
@@ -82,8 +60,8 @@ impl JSParser {
 					});
 				})
 			).unwrap();
-        });
-    }
+	   });
+	}
 
 	pub fn set_globals(&mut self) {
 		self.context.borrow().with(|ctx| {
@@ -100,65 +78,65 @@ fn clear_gl_window_color(red: f32, green: f32, blue: f32, alpha: f32) {
 }
 
 fn print_value(value: Value) {
-    let mut message = Vec::new();
+	let mut message = Vec::new();
 
-    if let Some(string_value) = value.clone().into_string() {
-        message.push(string_value.to_string().unwrap());
-    } else if let Some(num_value) = value.as_int() {
-        message.push(num_value.to_string());
-    } else if value.is_array() {
-        let length = value.as_array().unwrap().len();
-        let mut array_items = Vec::new();
-        for i in 0..length {
-            let item = value.as_array().unwrap().get(i).unwrap();
-            let mut item_message = Vec::new();
-            print_value_into(item, &mut item_message);
-            array_items.push(item_message.join(", ").trim().to_string());
-        }
-        message.push(format!("[{}]", array_items.join(", ")));
-    } else {
-        message.push("Unknown type".to_string());
-    }
+	if let Some(string_value) = value.clone().into_string() {
+	   message.push(string_value.to_string().unwrap());
+	} else if let Some(num_value) = value.as_int() {
+	   message.push(num_value.to_string());
+	} else if value.is_array() {
+	   let length = value.as_array().unwrap().len();
+	   let mut array_items = Vec::new();
+	   for i in 0..length {
+		  let item = value.as_array().unwrap().get(i).unwrap();
+		  let mut item_message = Vec::new();
+		  print_value_into(item, &mut item_message);
+		  array_items.push(item_message.join(", ").trim().to_string());
+	   }
+	   message.push(format!("[{}]", array_items.join(", ")));
+	} else {
+	   message.push("Unknown type".to_string());
+	}
 
-    print!("{} ", message.join(", ").trim());
+	print!("{} ", message.join(", ").trim());
 }
 
-fn set_timeout(delay_ms: u64, callback: String) {
-    thread::spawn(move || {
-		let rt = Runtime::new().unwrap();
-        let ctx = Context::full(&rt).unwrap();
-         
-		ctx.with(|ct| {
-			thread::sleep(Duration::from_millis(delay_ms));
-			// Send the callback to the main thread
-			ct.eval::<(), _>(format!("({})()", callback)).unwrap();
-		})
-    });
-}
+// fn set_timeout(delay_ms: u64, callback: String) {
+//	thread::spawn(move || {``
+// 		let rt = Runtime::new().unwrap();
+//		let ctx = Context::full(&rt).unwrap();
+		
+// 		ctx.with(|ct| {
+// 			thread::sleep(Duration::from_millis(delay_ms));
+// 			// Send the callback to the main thread
+// 			ct.eval::<(), _>(format!("({})()", callback)).unwrap();
+// 		})
+//	});
+// }
 
 // Helper function to populate message vector
 fn print_value_into(value: Value, message: &mut Vec<String>) {
-    if let Some(string_value) = value.clone().into_string() {
-        message.push(string_value.to_string().unwrap());
-    } else if let Some(num_value) = value.as_int() {
-        message.push(num_value.to_string());
-    } else if value.is_array() {
-        let length = value.as_array().unwrap().len();
-        let mut array_items = Vec::new();
-        for i in 0..length {
-            let item = value.as_array().unwrap().get(i).unwrap();
-            let mut item_message = Vec::new();
-            print_value_into(item, &mut item_message);
-            array_items.push(item_message.join(", ").trim().to_string());
-        }
-        message.push(format!("[{}]", array_items.join(", ")));
-    } else {
-        message.push("Unknown type".to_string());
-    }
+	if let Some(string_value) = value.clone().into_string() {
+	   message.push(string_value.to_string().unwrap());
+	} else if let Some(num_value) = value.as_int() {
+	   message.push(num_value.to_string());
+	} else if value.is_array() {
+	   let length = value.as_array().unwrap().len();
+	   let mut array_items = Vec::new();
+	   for i in 0..length {
+		  let item = value.as_array().unwrap().get(i).unwrap();
+		  let mut item_message = Vec::new();
+		  print_value_into(item, &mut item_message);
+		  array_items.push(item_message.join(", ").trim().to_string());
+	   }
+	   message.push(format!("[{}]", array_items.join(", ")));
+	} else {
+	   message.push("Unknown type".to_string());
+	}
 }
 
 fn console_log(
-    values: Rest<Value>
+	values: Rest<Value>
 ) {
 	for value in values.0 {
 		print_value(value);
