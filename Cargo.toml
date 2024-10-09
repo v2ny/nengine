@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 gl = { version = "0.14.0" }
 glfw = { version = "0.58.0", features = ["image"] }
+image = { version = "0.25.2" }
 
 mlua = { version = "0.9.9", features = ["lua54", "vendored"] }
 rquickjs = { version = "0.6.2", features = ["default", "loader", "dyn-load", "futures", "parallel"] }
@@ -24,4 +25,4 @@ rayon = { version = "1.10.0" }
 
 tobj = { version = "4.0.2" }
 goth-gltf = { version = "0.1.1" }
-anyhow = "1.0.89"
+anyhow = { version = "1.0.89" }
