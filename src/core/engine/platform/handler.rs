@@ -1,7 +1,6 @@
-use egui_glfw::glfw;
 use crate::core::engine::shaders::manager::{Shader, ShaderSources};
 
-use super::implementations::{UIHolder, Window, WindowProperties, WindowShaders};
+use super::implementations::{Window, WindowProperties, WindowShaders};
 
 impl Window {
 	pub fn new(properties: WindowProperties, scripts: Vec<String>) -> Self {
@@ -59,7 +58,6 @@ impl Window {
 			window,
 			events,
 
-			ui: UIHolder::default(),
 			scripts,
 			shaders: WindowShaders {
 				default: default_shader
@@ -71,12 +69,18 @@ impl Window {
 		self.window.should_close()
 	}
 
+	pub fn enable_gl_flags(&mut self) {
+		unsafe {
+			gl::Enable(gl::DEPTH_TEST);
+		}
+	} 
+
 	pub fn initialize_opengl(&mut self) {
 		self.glfw.make_context_current(Some(&self.window));
 		gl::load_with(|s| self.glfw.get_proc_address_raw(s));
 
-		self.ui.setup(&mut self.window);
 		self.shaders.default.setup();
+		self.enable_gl_flags();
 	}
 
 	pub fn run(&mut self) {

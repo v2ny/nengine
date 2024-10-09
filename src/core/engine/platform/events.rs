@@ -1,9 +1,10 @@
 use std::ffi::c_void;
 
-use egui_glfw::{self as egui_backend, glfw::{self, Context}};
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
+use glfw::Context;
+use nalgebra::{Point3, Vector3};
 
-use crate::core::engine;
+use crate::core::{engine::{self, objects::graphics::GraphicsObjects, threed::{model::{ModelMatrix, ModelTransformData}, projection::{self, ProjectionData, ProjectionMatrix}, view::{ViewData, ViewMatrix}}}, utils::model::manager::ModelLoader};
 use super::implementations::Window;
 
 impl Window {
@@ -35,30 +36,56 @@ impl Window {
 
 		self.initialize_app(&mut lua_parser, &mut js_parser);
 
-		let vao = self.draw_triangle();
+		let mut cube = ModelLoader::new("examples/models/Carrots.obj");
+		let mut gob = GraphicsObjects::default();
+		cube.load();
 		while !self.should_close() {
 			let (width, height) = self.window.get_framebuffer_size();
 			gl::Viewport(0, 0, width, height); // Update viewport
 	
-			self.ui.set_np(&mut self.window);
-			self.ui.estate = Some(self.egui_input_state(width as f32, height as f32));
 			// * Handle glfw events
 			self.glfw.poll_events();
 			self.handle_events();
 
-			self.ui.context.as_mut().expect("[S:UC] No context available.").begin_frame(self.ui.estate.as_mut().unwrap().input.take());
-			
+			self.shaders.default.use_program();
+
+			let projection = ProjectionMatrix::new(ProjectionData {
+				fov: 80.0_f32.to_radians(),
+				aspect_ratio: (width as f32) / (height as f32),
+				distance: projection::Distance {
+					far: 1000.0,
+					near: 0.1,
+				}
+			});
+
+			let view = ViewMatrix::new(ViewData {
+				eye: Point3::new(0.0, 0.0, 5.0),
+				target: Point3::default(),
+				up: Vector3::y(),
+			});
+
+			let time = self.glfw.get_time() as f32;
+			let rotation = Vector3::new(time, time, 0.0); // Rotating in X and Y axes over time
+
+			let model = ModelMatrix::new(ModelTransformData {
+				translation: Vector3::default(),
+				scale: Vector3::new(1.0, 1.0, 1.0),
+				rotation,
+			});
+
 			// * Clear window color
 			lua_parser.load();
 			js_parser.load();
-			gl::Clear(gl::COLOR_BUFFER_BIT);
+			gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 			
 			self.shaders.default.use_program();
-			gl::BindVertexArray(vao);
-			gl::DrawArrays(gl::TRIANGLES, 0, 3);
 
-			self.ui.draw();
-			self.handle_egui();
+			self.shaders.default.set_uniform_matrix4fv("projection", &projection.matrix);
+			self.shaders.default.set_uniform_matrix4fv("view", &view.matrix);
+			self.shaders.default.set_uniform_matrix4fv("model", &model.matrix);
+
+			cube.draw(&mut gob);
+			gl::DrawArrays(gl::TRIANGLES, 0, 3);
 
 			// * Swap window's buffers :)
 			self.window.swap_buffers();
@@ -109,12 +136,10 @@ impl Window {
 				glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Release, _) => {
 					self.window.set_should_close(true);
 				},
+				_ => {}
 				// glfw::WindowEvent::CursorPos(x, y) => {
 				// 	println!("X: {:.2}, Y: {:.2}", x, y);
 				// }
-				_ => {
-					egui_backend::handle_event(event, self.ui.estate.as_mut().unwrap());
-				}
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 use core::str;
 use std::{ffi::CString, fs};
 use gl::types::{GLchar, GLint};
+use nalgebra::Matrix4;
 
 pub struct ShaderSources {
 	pub vertex: String,
@@ -97,7 +98,7 @@ impl Shader {
 			 }
 
 			// Set the shader implementation's struct program_id to the shader_program (The program id)
-			self.program_id = shader_program;
+		self.program_id = shader_program;
 
 			// Once we are done and we got the program id, We can now delete both of the vertex and fragment shader.
 			gl::DeleteShader(vertex_shader);
@@ -108,5 +109,18 @@ impl Shader {
 	pub fn use_program(&mut self) {
 		// Use the shader program.
 		unsafe { gl::UseProgram(self.program_id) }
+	}
+
+	pub fn set_uniform_matrix4fv(&mut self, name: &str, matrix: &Matrix4<f32>) {
+		// Get the location of the uniform in the shader program
+		let cstr = std::ffi::CString::new(name).unwrap();
+		let location = unsafe { gl::GetUniformLocation(self.program_id, cstr.as_ptr()) };
+	
+		if location != -1 {
+			// Send the matrix data to the uniform
+			unsafe {
+				gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
+			}
+		}
 	}
 }

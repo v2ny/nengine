@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 gl = { version = "0.14.0" }
-egui_glfw = { version = "0.55.2" }
+glfw = { version = "0.58.0", features = ["image"] }
 
 mlua = { version = "0.9.9", features = ["lua54", "vendored"] }
 rquickjs = { version = "0.6.2", features = ["default", "loader", "dyn-load", "futures", "parallel"] }
