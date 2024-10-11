@@ -42,7 +42,8 @@ pub struct WindowProperties {
 }
 
 pub struct WindowShaders {
-	pub default: Shader
+	pub default: Shader,
+	pub ui: Shader,
 }
 
 pub struct UIStates {

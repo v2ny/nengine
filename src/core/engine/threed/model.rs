@@ -1,5 +1,11 @@
 use nalgebra::{Matrix4, Vector3, Rotation3};
 
+#[derive(Debug, PartialEq)]
+pub enum Threed {
+	DEFAULT,
+	UI
+}
+
 #[derive(Debug)]
 pub struct ModelTransformData {
 	pub translation: Vector3<f32>, 

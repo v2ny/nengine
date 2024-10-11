@@ -123,4 +123,12 @@ impl Shader {
 			}
 		}
 	}
+
+	pub fn set_uniform3f(&mut self, name: &str, x: f32, y: f32, z: f32) {
+		let cstr = CString::new(name).unwrap();
+        let location = unsafe { gl::GetUniformLocation(self.program_id, cstr.as_ptr()) };
+        unsafe {
+            gl::Uniform3f(location, x, y, z);
+        }
+    }
 }

@@ -1,7 +1,7 @@
 use glfw::Context;
 use nalgebra::{Point3, Vector3};
 
-use crate::core::{engine::{self, threed::{model::{ModelMatrix, ModelTransformData}, projection::{self, ProjectionData, ProjectionMatrix}, view::{ViewData, ViewMatrix}}}, utils::{model::manager::ModelLoader, texture::manager::Texture}};
+use crate::core::{engine::{self, ortho::projection::Orthographic, threed::{model::{ModelMatrix, ModelTransformData, Threed}, projection::{self, ProjectionData, ProjectionMatrix}, view::{ViewData, ViewMatrix}, ThreedSize, UseThreed}, ui::test::TestComponent}, utils::{model::manager::ModelLoader, texture::manager::Texture}};
 use super::implementations::Window;
 
 impl Window {
@@ -22,10 +22,10 @@ impl Window {
 		}
 	}
 
-	pub fn use_threed_world(&mut self, width: i32, height: i32) {
+	pub fn use_threed_world(&mut self, data: UseThreed) {
 		let projection = ProjectionMatrix::new(ProjectionData {
 			fov: 80.0_f32.to_radians(),
-			aspect_ratio: (width as f32) / (height as f32),
+			aspect_ratio: (data.size.width as f32) / (data.size.height as f32),
 			distance: projection::Distance {
 				far: 1000.0,
 				near: 0.1,
@@ -38,18 +38,13 @@ impl Window {
 			up: Vector3::y(),
 		});
 
-		let time = self.glfw.get_time() as f32;
-		let rotation = Vector3::new(time, time, 0.0); // Rotating in X and Y axes over time
+		let model = ModelMatrix::new(data.model_transform);
 
-		let model = ModelMatrix::new(ModelTransformData {
-			translation: Vector3::default(),
-			scale: Vector3::new(1.0, 1.0, 1.0),
-			rotation,
-		});
-
-		self.shaders.default.set_uniform_matrix4fv("projection", &projection.matrix);
-		self.shaders.default.set_uniform_matrix4fv("view", &view.matrix);
-		self.shaders.default.set_uniform_matrix4fv("model", &model.matrix);
+		if data.shader_type == Threed::DEFAULT {
+			self.shaders.default.set_uniform_matrix4fv("projection", &projection.matrix);
+			self.shaders.default.set_uniform_matrix4fv("view", &view.matrix);
+			self.shaders.default.set_uniform_matrix4fv("model", &model.matrix);
+		}
 	}
 
 	/// # Safety
@@ -68,6 +63,9 @@ impl Window {
 		texture.init();
 		cube.load();
 
+		let mut test = TestComponent::default();
+		test.init();
+
 		while !self.should_close() {
 			let (width, height) = self.window.get_framebuffer_size();
 			gl::Viewport(0, 0, width, height); // Update viewport
@@ -79,7 +77,15 @@ impl Window {
 			self.shaders.default.use_program();
 			
 			// * Setup & use projection, model and view matrix
-			self.use_threed_world(width, height);
+			self.use_threed_world(UseThreed { 
+				size: ThreedSize { width, height }, 
+				shader_type: Threed::DEFAULT, 
+				model_transform: ModelTransformData { 
+					translation: Vector3::default(), 
+					rotation: Vector3::default(), 
+					scale: Vector3::new(1.0, 1.0, 1.0)
+				}
+			});
 
 			// * Clear window color
 			lua_parser.load();
@@ -89,6 +95,11 @@ impl Window {
 			// * Render a model
 			texture.apply(0, self.shaders.default.program_id);
 			cube.draw();
+
+			self.shaders.ui.use_program();
+			let ortho_projection = Orthographic::new(0.0, width as f32, height as f32, 0.0, -1.0, 1.0).matrix();
+			self.shaders.ui.set_uniform_matrix4fv("projection", &ortho_projection);
+			test.draw();
 
 			// * Swap window's buffers :)
 			self.window.swap_buffers();

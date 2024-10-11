@@ -53,6 +53,12 @@ impl Window {
 			fragment: String::from("resources/shaders/fragment.glsl"),
 		});
 
+		let ui_shader = Shader::new(ShaderSources {
+			vertex: String::from("resources/shaders/ui/text/vertex.glsl"),
+			fragment: String::from("resources/shaders/ui/text/fragment.glsl"),
+		});
+
+
 		Window {
 			glfw,
 			window,
@@ -60,7 +66,8 @@ impl Window {
 
 			scripts,
 			shaders: WindowShaders {
-				default: default_shader
+				default: default_shader,
+				ui: ui_shader
 			}
 		}
 	}
@@ -72,6 +79,9 @@ impl Window {
 	pub fn enable_gl_flags(&mut self) {
 		unsafe {
 			gl::Enable(gl::DEPTH_TEST);
+			gl::Enable(gl::DEBUG_OUTPUT);
+			gl::Enable(gl::BLEND);
+			gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 		}
 	} 
 
@@ -80,6 +90,8 @@ impl Window {
 		gl::load_with(|s| self.glfw.get_proc_address_raw(s));
 
 		self.shaders.default.setup();
+		self.shaders.ui.setup();
+
 		self.enable_gl_flags();
 	}
 
