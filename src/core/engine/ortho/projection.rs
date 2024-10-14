@@ -20,18 +20,6 @@ impl Orthographic {
     }
 
     pub fn matrix(&self) -> nalgebra::Matrix4<f32> {
-        let lr = 1.0 / (self.right - self.left);
-        let bt = 1.0 / (self.top - self.bottom);
-        let nf = 1.0 / (self.far - self.near);
-
-        nalgebra::Matrix4::new(
-            2.0 * lr, 0.0, 0.0, 0.0,
-            0.0, 2.0 * bt, 0.0, 0.0,
-            0.0, 0.0, -2.0 * nf, 0.0,
-            -(self.right + self.left) * lr,
-            -(self.top + self.bottom) * bt,
-            -(self.far + self.near) * nf,
-            1.0,
-        )
+        *nalgebra::Orthographic3::new(self.left, self.right, self.bottom, self.top, self.near, self.far).as_matrix()
     }
 }

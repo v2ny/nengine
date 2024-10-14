@@ -1,7 +1,9 @@
+use std::time::Instant;
+
 use glfw::Context;
 use nalgebra::{Point3, Vector3};
 
-use crate::core::{engine::{self, ortho::projection::Orthographic, threed::{model::{ModelMatrix, ModelTransformData, Threed}, projection::{self, ProjectionData, ProjectionMatrix}, view::{ViewData, ViewMatrix}, ThreedSize, UseThreed}, ui::test::TestComponent}, utils::{model::manager::ModelLoader, texture::manager::Texture}};
+use crate::core::{engine::{self, threed::{model::{ModelMatrix, ModelTransformData, Threed}, projection::{self, ProjectionData, ProjectionMatrix}, view::{ViewData, ViewMatrix}, ThreedSize, UseThreed}, ui::text::ext::TextComponent}, utils::{model::manager::ModelLoader, texture::manager::Texture}};
 use super::implementations::Window;
 
 impl Window {
@@ -59,22 +61,30 @@ impl Window {
 		self.initialize_app(&mut lua_parser, &mut js_parser);
 
 		let mut texture = Texture::new("examples/models/textures/CarrotTexture.png", true);
+
 		let mut cube = ModelLoader::new("examples/models/cube.obj", true);
 		texture.init();
 		cube.load();
 
-		let mut test = TestComponent::default();
-		test.init();
+		let font_scale = 16.0;
+		let mut text = TextComponent::new("resources/fonts/default.ttf", font_scale);
+		text.set_text("excuse me what is a kilogram :eagle: 1234");
+		text.initialize();
 
+		let mut last_frame_time = Instant::now();
+		let mut fps: f32 = 0.0;
+		
 		while !self.should_close() {
 			let (width, height) = self.window.get_framebuffer_size();
-			gl::Viewport(0, 0, width, height); // Update viewport
+			gl::Viewport(0, 0, width, height);
 	
 			// * Handle glfw events
 			self.glfw.poll_events();
 			self.handle_events();
 
 			self.shaders.default.use_program();
+
+			let time = self.glfw.get_time() as f32;
 			
 			// * Setup & use projection, model and view matrix
 			self.use_threed_world(UseThreed { 
@@ -82,7 +92,7 @@ impl Window {
 				shader_type: Threed::DEFAULT, 
 				model_transform: ModelTransformData { 
 					translation: Vector3::default(), 
-					rotation: Vector3::default(), 
+					rotation: Vector3::new(time, time, 0.0), 
 					scale: Vector3::new(1.0, 1.0, 1.0)
 				}
 			});
@@ -92,14 +102,75 @@ impl Window {
 			js_parser.load();
 			gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-			// * Render a model
-			texture.apply(0, self.shaders.default.program_id);
+			texture.apply(3, "texture1", self.shaders.default.program_id);
 			cube.draw();
 
 			self.shaders.ui.use_program();
-			let ortho_projection = Orthographic::new(0.0, width as f32, height as f32, 0.0, -1.0, 1.0).matrix();
-			self.shaders.ui.set_uniform_matrix4fv("projection", &ortho_projection);
-			test.draw();
+
+			// Set up the projection matrix where (0, 0) is top-left and (width, height) is bottom-right
+			let projection_matrix = nalgebra::Matrix4::new_orthographic(
+				0.0, width as f32,    // Left, right
+				height as f32, 0.0,   // Bottom, top (flipped to place (0, 0) at top-left)
+				-1.0, 1.0             // Near, far
+			);
+			
+			
+			self.shaders.ui.set_uniform_matrix4fv("projection", &projection_matrix);
+
+			let binding = text.text.clone();
+			let chars = binding.chars();
+
+			// 1. Calculate time since the last frame
+			let now = Instant::now();
+			let frame_duration = now.duration_since(last_frame_time);
+			last_frame_time = now;
+			
+			// 2. Calculate FPS (frames per second)
+			let frame_time_seconds = frame_duration.as_secs_f32();  // Convert to seconds
+			if frame_time_seconds > 0.0 {
+				fps = 1.0 / frame_time_seconds;
+			}
+
+
+			let mut last_img_width = font_scale / 2.0;
+			let mut last_img_height = 0.0;
+			let space_width = font_scale / 1.5;  // Adjust this value for the space character
+
+			// Find the maximum height of all glyphs (to set a common baseline)
+			let max_height = text.glyphs_image.values()
+				.map(|img| img.dimensions.1 as f32)
+				.max_by(|a, b| a.partial_cmp(b).unwrap())
+				.unwrap_or(0.0);  // Default to 0.0 if no glyphs are available
+
+			// Loop through each character in the string
+			chars.for_each(|char| {
+				if let Some(img) = text.glyphs_image.clone().get_mut(&char) {
+					// Character found in glyphs_image
+					last_img_height = img.dimensions.1 as f32;
+					// Calculate the y offset to align all glyphs on the same baseline
+					let vertical_offset = max_height - img.dimensions.1 as f32;
+
+					// Adjust translation: apply only the vertical_offset without adding it to glyph height
+					let model = ModelMatrix::new(ModelTransformData {
+						translation: Vector3::new(last_img_width, last_img_height + vertical_offset + (font_scale / 2.0), 0.0),
+						rotation: Vector3::default(),
+						scale: Vector3::new(img.dimensions.0 as f32, img.dimensions.1 as f32, 1.0),
+					});
+
+					// Set the uniform matrix for the shader
+					self.shaders.ui.set_uniform_matrix4fv("model", &model.matrix);
+
+					// Apply the texture and draw the character
+					img.apply(0, "texture1", self.shaders.ui.program_id);
+					text.set_vertex();
+
+					// Increment the width based on the character's width and a small adjustment for spacing
+					last_img_width += img.dimensions.0 as f32 + font_scale * 0.1;  // Adjust horizontal spacing
+				} else {
+					// If character is not found (or is a space), increment by the space_width
+					last_img_width += space_width;  // Use appropriate space width
+				}
+			});
 
 			// * Swap window's buffers :)
 			self.window.swap_buffers();

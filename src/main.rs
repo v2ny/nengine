@@ -1,6 +1,7 @@
 use core::engine::platform::implementations::{self, Size, WindowOptions, WindowProperties};
 
 pub mod core;
+pub mod utils;
 
 fn main() {
     let mut platform = implementations::Window::new(WindowProperties {

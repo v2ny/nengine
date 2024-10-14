@@ -2,13 +2,16 @@ use gl::types::GLuint;
 use image::{DynamicImage, GenericImageView};
 use std::ffi::CString;
 
-#[derive(Clone)]
+use crate::{log, utils::log::manager::{gl_error_to_message, LogLevel, Logger}};
+
+#[derive(Debug, Clone)]
 pub struct Texture {
     pub id: GLuint,
     pub src: String,
 	pub flipv: bool,
     pub linear_sampler: GLuint,
-	pub has_alpha: bool
+	pub has_alpha: bool,
+	logger: Logger
 }
 
 impl Texture {
@@ -19,6 +22,7 @@ impl Texture {
             linear_sampler: 0,
 			has_alpha: false,
 			flipv: flip_verticall,
+			logger: Logger::new("debug/texture.log")
         }
     }
 
@@ -27,13 +31,13 @@ impl Texture {
             // Create texture and set up storage
             gl::CreateTextures(gl::TEXTURE_2D, 1, &mut self.id);
             if self.id == 0 {
-				panic!("Failed to generate texture ID");
+				log!(self.logger, LogLevel::Error, "Failed to generate a texture id for \"{}\"", self.src);
             }
 
 			// Create and configure sampler
 			gl::CreateSamplers(1, &mut self.linear_sampler);
 			if self.linear_sampler == 0 {
-				panic!("Failed to generate sampler ID");
+				log!(self.logger, LogLevel::Error, "Failed to generate a sampler id for \"{}\"", self.src);
 			}
 
 			gl::SamplerParameteri(self.linear_sampler, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
@@ -84,7 +88,7 @@ impl Texture {
 				"gl::RGB8"
 			} else { "gl::RGBA8" };
 
-			println!("Retreived an image with fmt {printable_format}");
+			log!(self.logger, LogLevel::Info, "Detected texture's image format is \"{}\"", printable_format);
 
             gl::TextureStorage2D(self.id, 1, internal_format as u32, width as i32, height as i32);
 
@@ -107,46 +111,47 @@ impl Texture {
 
             // Generate mipmaps
             gl::GenerateTextureMipmap(self.id);
-			println!("Generated texture mipmaps for texture's id number: {}", self.id);
+			log!(self.logger, LogLevel::Info, "Generated texture mipmaps for texture's id number: \"{}\"", self.id);
         }
     }
 
-    pub fn apply(&self, texture_unit: u32, program_id: u32) {
+
+    pub fn apply(&mut self, texture_unit: u32, sampler_name: &str, program_id: u32) {
         unsafe {
             if self.id == 0 {
-				panic!("Bad texture id was found. Id: {}", self.id);
+				log!(self.logger, LogLevel::Error, "Couldn't apply texture \"{}\" because texture id was \"{}\"", self.src, self.id);
 			}
-
-            // Activate texture unit
-            gl::ActiveTexture(gl::TEXTURE0 + texture_unit);
-            gl::BindTexture(gl::TEXTURE_2D, self.id);
-            gl::BindSampler(texture_unit, self.linear_sampler);
 
             // Set the uniform to use the texture unit
-            let texture_name = CString::new("texture1").unwrap();
+            let texture_name = CString::new(sampler_name).unwrap();
             let texture_location = gl::GetUniformLocation(program_id, texture_name.as_ptr());
 			if texture_location == -1 {
-				println!("Invalid uniform location for texture");
+				log!(self.logger, LogLevel::Error, "Invalid sampler2d's \"{}\" uniform location for \"{}\" texture", sampler_name, self.src);
 			}
             gl::ProgramUniform1i(program_id, texture_location, texture_unit as i32);
-
-			// Check for OpenGL errors
-            let error = gl::GetError();
-            if error != gl::NO_ERROR {
-				println!("OpenGL Error while applying.");
-            }
 
 			let has_alpha_name = CString::new("has_alpha").unwrap();
 			let has_alpha_location = gl::GetUniformLocation(program_id, has_alpha_name.as_ptr());
 			if has_alpha_location == -1 {
-				println!("Invalid uniform location for texture");
+				log!(self.logger, LogLevel::Error, "Invalid boolean's \"has_alpha\" uniform location for \"{}\" texture", self.src);
 			}
 			gl::ProgramUniform1i(program_id, has_alpha_location, self.has_alpha as i32);
 
             // Check for OpenGL errors
             let error = gl::GetError();
             if error != gl::NO_ERROR {
-				println!("OpenGL Error while applying texture");
+				log!(self.logger, LogLevel::Error, "Opengl error occured while applying texture \"{}\"\n- Opengl Code: {}\n- Opengl Formatted Reason: {}", self.src, error, gl_error_to_message(error));
+            }
+
+            // Activate texture unit
+            gl::ActiveTexture(gl::TEXTURE0 + texture_unit);
+            gl::BindTexture(gl::TEXTURE_2D, self.id);
+            gl::BindSampler(texture_unit, self.linear_sampler);
+
+			// Check for OpenGL errors
+            let error = gl::GetError();
+            if error != gl::NO_ERROR {
+				log!(self.logger, LogLevel::Error, "Opengl error occured after setting uniform location of the texture \"{}\"\n- Opengl Code: {}\n- Opengl Formatted Reason: {}", self.src, error, gl_error_to_message(error));
             }
         }
     }

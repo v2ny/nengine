@@ -6,7 +6,7 @@ pub enum Threed {
 	UI
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ModelTransformData {
 	pub translation: Vector3<f32>, 
 	pub rotation: Vector3<f32>, 
